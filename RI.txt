@@ -1,0 +1,9 @@
+Iin 2 0 5 0 0 0
+R1 1 0 3K
+R2 1 2 1K
+R3 3 1 1K
+I1 3 0 5 0 0 0
+dV 1u
+dI 1
+dT 1u
+.tran 4m
