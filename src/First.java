@@ -466,7 +466,12 @@ return numR; }
         }
         if(e instanceof Capacitor) {
             if(m==1)I=0;
-            else   I=(e.value/dT)*((data.Node[aN].v[m-1]-data.Node[nodeNum].v[m-1])-(data.Node[aN].v[m-2]-data.Node[nodeNum].v[m-2]));
+            else {
+             double V= ((data.Node[aN].v[m - 1] - data.Node[nodeNum].v[m - 1]) - (data.Node[aN].v[m - 2] - data.Node[nodeNum].v[m - 2]));
+                I = (e.value / dT) * V;
+
+
+            }
            System.out.println(data.Node[aN].v[m-1]+" "+data.Node[nodeNum].v[m-1]+" "+I);
         }
         if(e instanceof CurrentSource){
@@ -629,7 +634,7 @@ public class First {
     public static void main(String[] args) throws IOException {
       //  GraphicsF g=new GraphicsF();//
         //ReadTxt r=new ReadTxt("E.txt");
-    SolveCircuit sC=new SolveCircuit("RCI.txt");
+    SolveCircuit sC=new SolveCircuit("RCV.txt");
    sC.solveRLC();
         sC.saveResult();
    /* for(Branch b:sC.data.Branch){
