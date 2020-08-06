@@ -1631,8 +1631,8 @@ class Show extends Canvas {
 
 public class First {
     public static void main(String[] args) throws IOException {
-       /* SolveCircuit sC=new SolveCircuit("RC_circuit.txt");
+       SolveCircuit sC=new SolveCircuit("RLCI_circuit.txt");
    sC.calculateResult();
-   sC.saveResult();*/
-  Show s=new Show();
+   sC.saveResult();
+ // Show s=new Show();
     }}
