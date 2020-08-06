@@ -1,8 +1,8 @@
 dI 1000
-dV 100u
-dT 0.1u
+dV 10u
+dT 1m
 V1 1 0 1 0 0 0
 R1 1 2 0.1
 L1 2 3 1u
 C1 3 0 25.33n
-.tran 50u
+.tran 10m

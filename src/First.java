@@ -1,17 +1,20 @@
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
+import java.beans.PropertyChangeListener;
 import java.io.*;
 import java.text.AttributedCharacterIterator;
 import java.util.*;
 class Node{
     int union;
+    int index;
     int cond=0,cond1=0;
     boolean visited=false;
     double[] v,i;
+    ArrayList<Integer> draw=new ArrayList<>();
     ArrayList<Branch> branches;
     Queue<Integer> neighbors;
     ArrayList<Integer> x;
@@ -33,34 +36,20 @@ class Branch{
     double[] i;
     double[] v;
     double[] p;
-    Branch(){
-
-    }
 }
 class Resistor extends Branch{
-    Resistor(){
-        super();
-    }
 }
 class Capacitor extends Branch{
-    Capacitor(){
-       super();
-    }
 }
 class Inductor extends Branch{
-    Inductor(){
-        super();
-    }
 }
 class CurrentSource extends Branch{
 double V,amp,freq,phase;
-CurrentSource(){super();}
 }
 class CurrentDI extends Branch{
     String deEl;
     Branch deElm;
     double gain;
-    CurrentDI(){super();}
 }
 class CurrentDV extends Branch{
     int deNodeOut,deNodeIn;
@@ -71,20 +60,17 @@ class VoltageSource extends Branch{
     double V,amp,freq,phase;
     VoltageSource(){super();}
 }
-class VoltageDI extends Branch{///i j c1 a ///voltage
+class VoltageDI extends Branch{///i j c1 a
     String deEl;
     Branch deElm;
     double gain;
-    VoltageDI(){super();}
 }
-class VoltageDV extends Branch{///i j k m a ///voltage
+class VoltageDV extends Branch{///i j k m a
     int deNodeOut,deNodeIn;
     double gain;
-    VoltageDV(){super();}
 }
 class D extends Branch{
     int index;
-    D(){super();}
 }
 class ReadTxt{
     double dv,di,dt=0,finalTime=0;
@@ -269,19 +255,19 @@ class ReadTxt{
                Error++;
            }
            else if(lineP[0].charAt(0)!='*'){
-               //System.exit(0);
                error=lineCounter;
-                  System.out.println(lineCounter);
+                  //System.out.println(lineCounter);
               }
            lineCounter++;
            line=bf.readLine();
        }
        bf.close();
-       if(Error!=4)error=-1;//System.exit(0);}
+       if(Error!=4)error=-1;
        Node=new Node[node+1];
            for(int i=0;i<=node;i++){
                Node[i]=new Node((int) (finalTime/dt)+1);
                Node[i].union=i;
+               Node[i].index=i;
                for(int j=0;j<=node;j++){
                    if(n[i][j]!=0){Node[i].neighbors.add(j);}
                }
@@ -318,8 +304,8 @@ class ReadTxt{
     for(int i=1;i<=node;i++){
         if (!Node[i].visited) {
             error = -5;
+            System.out.print("-5");
             break;
-            //System.exit(0);
         }
     }
     }
@@ -339,7 +325,7 @@ class ReadTxt{
                 else if(serI.get(i).NodeIn==serI.get(j).NodeOut){if(serI.get(i).value!=serI.get(j).value)e++;}
             }
         }
-        if(e!=0)error=-2;//System.exit(0);}
+        if(e!=0)error=-2;
     }
         public void findError_3(){
             int c=0;
@@ -358,8 +344,18 @@ class ReadTxt{
                     }
                 }
             }
-            if(c!=0){/*System.exit(0);*/error=-3;}
+            if(c!=0){error=-3;}
     }
+    /*public void setUnions(int m){
+        for(Integer i:unions.keySet()){
+            if(unions.get(i).size()==1){
+                Node[i].v[m]=0;
+            }
+            else{
+                
+            }
+        }
+    }*/
     public ArrayList<Integer> linkedNodes(int m){
         ArrayList<Integer> linkedNodes=new ArrayList<>();
         for(Branch branch:Branch){
@@ -374,6 +370,7 @@ class ReadTxt{
    public void createUnions(int m){
         for(int i=0;i<=node;i++){
                 if(!linkedNodes(i).isEmpty()){
+          //
                     for(Integer k:linkedNodes(i)){
                         Node[k].union=Math.min(Node[k].union,Node[i].union);
                     }
@@ -424,7 +421,14 @@ class ReadTxt{
             }
          }
         }}
-
+   public boolean resistanceC(){
+        if(r!=0&&CurrentCounter!=0){
+            if(VoltageCounter==0&&c==0&&l==0&&iv==0&&vi==0&&vv==0&&ii==0&&d==0)
+                return true;
+            return false;
+        }
+        return  false;
+   }
     public double readNum(String num){
     double numR=Double.parseDouble(num.replaceAll("[pnumKMG]",""));
     if(num.matches("(\\\\d+)([.][0-9]+)?p")){return Math.pow(10,-12);}
@@ -445,6 +449,7 @@ return numR; }
               data.findError_2();
               data.createUnions(0);
           }
+
           public void solveRLC(){
               Node N;
               double I1,I2z,I2k,t=0;
@@ -490,9 +495,11 @@ return numR; }
                           N.v[m]+=-data.dv+(itk*data.dv/data.di);
                           else
                           N.v[m]+=data.dv+(itz*data.dv/data.di);
-                       System.out.println(I1+" "+" "+I2k+" "+I2z+" "+data.Node[2].v[m-1]+" "+data.Node[2].v[m]);
-                       //   System.out.println(I1+" "+" "+I2k+" "+I2z+" "+data.Node[3].v[m-1]+" "+data.Node[3].v[m]);
-                         System.out.println(data.Node[1].v[m]);
+                     /* System.out.println("1   "+I1+" "+" "+I2k+" "+I2z+" "+data.Node[1].v[m-1]+" "+data.Node[1].v[m]);
+                       System.out.println("2   "+I1+" "+" "+I2k+" "+I2z+" "+data.Node[2].v[m-1]+" "+data.Node[2].v[m]);
+                        System.out.println("3   "+I1+" "+" "+I2k+" "+I2z+" "+data.Node[3].v[m-1]+" "+data.Node[3].v[m]);
+                          System.out.println("4  "+I1+" "+" "+I2k+" "+I2z+" "+data.Node[4].v[m-1]+" "+data.Node[4].v[m]);
+                          System.out.println("5   "+I1+" "+" "+I2k+" "+I2z+" "+data.Node[5].v[m-1]+" "+data.Node[5].v[m]);*/
                       }
 
                   }
@@ -521,8 +528,7 @@ return numR; }
                                           - data.Node[((Inductor) ((VoltageDI) e).deElm).NodeOut].v[m]);
                               e.value = e.value * dT / ((VoltageDI) e).deElm.value;
                           }
-                          
-                          e.value = e.value * dT / ((VoltageDI) e).deElm.value;
+
                       } else if (((VoltageDI) e).deElm instanceof Resistor) {
                           e.value = ((VoltageDI) e).gain * (data.Node[((VoltageDI) e).deElm.NodeIn].v[m - 1] -
                                   data.Node[((VoltageDI) e).deElm.NodeOut].v[m - 1]) / ((VoltageDI) e).deElm.value;
@@ -557,7 +563,8 @@ return numR; }
 
         if(e instanceof Resistor){
             I=(data.Node[aN].v[m-1]-data.Node[nodeNum].v[m-1])/e.value;
-            //System.out.println(I+"r");
+
+           //System.out.println(I+"    r");
         }
         else if(e instanceof Inductor) {
              if(m==1)I=-1*flag*dT*dV/e.value;
@@ -566,7 +573,7 @@ return numR; }
                 I+=(data.Node[aN].v[k]-data.Node[nodeNum].v[k]);
             I =(I*dT)/e.value;}
             if(flag==0)e.i[m-1]=I;
-//System.out.println(I);
+         //System.out.println(I+"     l");
         }
         else if(e instanceof Capacitor) {
                 double V=0;
@@ -575,12 +582,13 @@ return numR; }
                 if(flag!=0){ I=-1*flag*e.value*dV/dT;}
                 else{
                     if(m==1)I=0;
-                    else{
-                        I=(e.value / dT) * V;}
-                }
-               // System.out.println(I);
+                    else{ I=(e.value / dT) * V;}
+                    e.v[m-1]=V;
+               }
+             //  System.out.println(I+"    c");
             }
         else if(e instanceof CurrentSource){
+            if(flag!=0)t+=dT;
             I=((CurrentSource) e).V+((CurrentSource) e).amp*Math.sin(2*Math.PI*((CurrentSource) e).freq*t+((CurrentSource) e).phase);
             e.value=I;
             if(flag==0)e.i[m-1]=I;
@@ -608,16 +616,13 @@ return numR; }
             }
 
             else if(((CurrentDI) e).deElm instanceof Capacitor) {
-                if(flag==0){
                 if(m==1)I=0;
                 else{
                     I=data.Node[(((CurrentDI) e).deElm).NodeIn].v[m-1]-data.Node[(((CurrentDI) e).deElm).NodeOut].v[m-1]
                             -(data.Node[(((CurrentDI) e).deElm).NodeIn].v[m-2]-data.Node[(((CurrentDI) e).deElm).NodeOut].v[m-2])
                     *((CurrentDI) e).deElm.value*((CurrentDI) e).gain/dT;
 
-                }}
-                else if(flag==1){I=((CurrentDI) e).deElm.value*dV/dT;}
-                else I=-((CurrentDI) e).deElm.value*dV/dT;
+                }
                 if(nodeNum==e.NodeOut)I=-1*I;
                 e.value=I;
             }
@@ -626,7 +631,7 @@ return numR; }
 
         return I;
     }
-   /* public double[] solveMatrix(double[][] a,int n){
+   public double[] solveMatrix(double[][] a,int n){
         int i, j, k = 0, c;
         double[] result=new double[n];
         for (i = 0; i < n; i++){
@@ -682,8 +687,10 @@ return numR; }
             }
         }
         return solveMatrix(G,n);
-    }*/
+    }
     public void calculateResult(){
+              if(!data.resistanceC()){
+                  solveRLC();
  if(data.d!=0){if(data.Branch.contains(data.sc[0]))data.Branch.remove(data.sc[0]);}
               for(int c=0;c<data.finalTime/data.dt-1;c++){
               for(Branch b:data.Branch){
@@ -714,11 +721,11 @@ return numR; }
                   else if(b instanceof Inductor){
                       if(c==0)
                       b.i[c]=0;
-                      /*if(c!=0){///for(int k=1;k<m;k++)// Inductor.i[0]==0
-                          //I+=(data.Node[aN].v[k]-data.Node[nodeNum].v[k]);
-                          for(int i=1;i<=c;i++)b.i[c]+=b.v[i];
+                      if (c != 0) {
+
+                          for (int i = 1; i <= c; i++) b.i[c] += b.v[i];
                       }
-                      b.i[c]=b.i[c]*data.dt/b.value;*/
+                      b.i[c]=b.i[c]*data.dt/b.value;
                   }
                   else if(b instanceof CurrentDI){
                      b.i[c]=((CurrentDI) b).gain*((CurrentDI) b).deElm.i[c];
@@ -741,7 +748,24 @@ return numR; }
                           b.v[c]=((VoltageDI) b).gain*((VoltageDI) b).deElm.i[c];
                       }
                   }
+              }}}
+              else{
+                  int d=1;
+                for(double i:solveResistanceCircuit()){
+                    for(int j=0;j<data.finalTime/data.dt-1;j++){
+                     data.Node[d].v[j]=i;
+                    }
+                    d++;
+                } for(Branch b:data.Branch){
+                  for(int j=0;j<data.finalTime/data.dt-1;j++){
+                   b.v[j]=data.Node[b.NodeIn].v[j]-data.Node[b.NodeOut].v[j];
+                   if(b instanceof Resistor)b.i[j]=b.v[j]/b.value;
+                   else if(b instanceof CurrentSource)b.i[j]=((CurrentSource) b).V;
+                  }
               }}
+              for(Branch b:data.Branch){
+                  for(int j=0;j<data.finalTime/data.dt-1;j++)b.p[j]=b.i[j]*b.v[j];
+              }
     }
     public void saveResult() throws IOException {
               BufferedWriter bw=new BufferedWriter(new FileWriter("result.txt"));
@@ -755,427 +779,13 @@ return numR; }
              for(Branch b:data.Branch){
                  bw.write(b.name);
                  for(int j=0;j<((int)  (data.finalTime / data.dt));j++){
-                     bw.write(" "+b.v[j]+" "+b.i[j]+" "+(b.v[j])*(b.i[j]));
+                     bw.write("    "+b.v[j]+" "+b.i[j]+" "+b.p[j]);
                  }
                  bw.newLine();
              }
               bw.close();
 }}
-/*class Phase2 {
-    ReadTxt data;
-    Phase2(String fileName) throws IOException {
-        data = new ReadTxt(fileName);
-        data.createElements();
-        JFrame frame1 = new JFrame();
-        Container container = frame1.getContentPane();
-        JRootPane root = frame1.getRootPane();
-        LayoutManager mgr = new GroupLayout(container);
-        frame1.setLayout(mgr);
-        JPanel panel = new JPanel();
-        int x = 100, Y = -1;
-        int count = 0;
-        for (int i = 0; i <= data.node; i++) {
-            count = 0;
-            for (Branch branch : data.Node[i].branches) {
-                if ((branch.NodeIn == 0 || branch.NodeOut == 0))
-                    count++;
-            }
-            if (count > 1)
-                data.Node[i].cond = count;
-        }
-        for (int i = 0; i <= data.node; i++) {
-            if (i % 6 == 1 || i == 0)
-                x = 200;
-            if (data.Node[i].cond > 0) {
-                for (int j = 0; j < data.Node[i].cond; j++) {
-                    if (x + 50 * j == 200)
-                        Y++;
-                    data.Node[i].y.add((int) 400 - Y * 100);
-                    data.Node[i].x.add((int) (x + 50 * j));
 
-                }
-            } else {
-                if (x == 200)
-                    Y++;
-                data.Node[i].y.add((int) 400 - Y * 100);
-                data.Node[i].x.add((int) (x));
-            }
-            x += 50 * (data.Node[i].x.size());
-
-        }
-        for (int i = 0; i <= data.node; i++) {
-            int j = 0;
-            for (Branch branch : data.Node[i].branches) {
-                if (branch.draw == 0) {
-                    if (data.Node[branch.NodeIn].y.get(0) !=
-                            (int) data.Node[branch.NodeOut].y.get(0)) {
-                        if (branch instanceof Resistor) {
-                            ImageIcon resistor = new ImageIcon("r2.png");
-                            resistor = scaling(resistor,1);
-                            JLabel lr2 = new JLabel(resistor);
-                            draw(branch, panel, lr2, data.Node[i], j);
-                        }
-                        if (branch instanceof Capacitor) {
-                            ImageIcon capacitor = new ImageIcon("c2.png");
-                            capacitor = scaling(capacitor,1);
-                            JLabel lc2 = new JLabel(capacitor);
-                            draw(branch, panel, lc2, data.Node[i], j);
-                        }
-                        if (branch instanceof Inductor) {
-                            ImageIcon Inductor = new ImageIcon("l2.jpg");
-                            Inductor = scaling(Inductor,1);
-                            JLabel lL2 = new JLabel(Inductor);
-                            draw(branch, panel, lL2, data.Node[i], j);
-                        }
-                        if (branch instanceof D) {
-                            ImageIcon Diod = new ImageIcon("d2.png");
-                            Diod=scaling(Diod,1);
-                            JLabel ld2 = new JLabel(Diod);
-                            ImageIcon Diod2 = new ImageIcon("d3.png");
-                            Diod2 = scaling(Diod2,1);
-                            JLabel ld3 = new JLabel(Diod2);
-                            if (data.Node[i].equals(data.Node[branch.NodeIn]))
-                                draw(branch, panel, ld2, data.Node[i], j);
-                            if (data.Node[i].equals(data.Node[branch.NodeOut]))
-                                draw(branch, panel, ld3, data.Node[i], j);
-                        }
-                        if (branch instanceof CurrentDI ||
-                                branch instanceof CurrentDV) {
-                            ImageIcon CurrentD = new ImageIcon("cd2.png");
-                            CurrentD = scaling(CurrentD,1);
-                            JLabel lCD2 = new JLabel(CurrentD);
-                            ImageIcon CurrentD2 = new ImageIcon("cd3.png");
-                            CurrentD2 = scaling(CurrentD2,1);
-                            JLabel lCD3 = new JLabel(CurrentD2);
-                            if (data.Node[i].equals(data.Node[branch.NodeIn]))
-                                draw(branch, panel, lCD2, data.Node[i], j);
-                            if (data.Node[i].equals(data.Node[branch.NodeOut]))
-                                draw(branch, panel, lCD3, data.Node[i], j);
-                        }
-                        if (branch instanceof CurrentSource) {
-                            ImageIcon CurrentIndependent = new ImageIcon("ii22.png");
-                            Image scaled = CurrentIndependent.getImage();
-                            Image modified = scaled.getScaledInstance(100, 130, java.awt.Image.SCALE_SMOOTH);
-                            CurrentIndependent = new ImageIcon(modified);
-                            JLabel lCI2 = new JLabel(CurrentIndependent);
-                            ImageIcon CurrentIndependent2 = new ImageIcon("ii3.png");
-                            scaled = CurrentIndependent2.getImage();
-                            modified = scaled.getScaledInstance(100, 130, java.awt.Image.SCALE_SMOOTH);
-                            CurrentIndependent2 = new ImageIcon(modified);
-                            JLabel lCI3 = new JLabel(CurrentIndependent2);
-                            if (data.Node[i].equals(data.Node[branch.NodeIn]))
-                                draw(branch, panel, lCI2, data.Node[i], j);
-                            if (data.Node[i].equals(data.Node[branch.NodeOut]))
-                                draw(branch, panel, lCI3, data.Node[i], j);
-                        }
-                        if (branch instanceof VoltageDI ||
-                                branch instanceof VoltageDV) {
-                            ImageIcon VoltageD = new ImageIcon("vd2.png");
-                            VoltageD = scaling( VoltageD,1);
-                            JLabel lVD2 = new JLabel(VoltageD);
-                            ImageIcon VoltageD2 = new ImageIcon("vd3.png");
-                            VoltageD2 = scaling( VoltageD2,1);
-                            JLabel lVD3 = new JLabel(VoltageD2);
-                            if (data.Node[i].equals(data.Node[branch.NodeIn]))
-                                draw(branch, panel, lVD2, data.Node[i], j);
-                            if (data.Node[i].equals(data.Node[branch.NodeOut]))
-                                draw(branch, panel, lVD3, data.Node[i], j);
-                        }
-                        if (branch instanceof VoltageSource) {
-                            ImageIcon VoltageIndependent = new ImageIcon("vi2.png");
-                            VoltageIndependent = scaling(VoltageIndependent,1);
-                            JLabel lVI2 = new JLabel(VoltageIndependent);
-                            ImageIcon VoltageIndependent2 = new ImageIcon("vi3.png");
-                            VoltageIndependent2 = scaling(VoltageIndependent2,1);
-                            JLabel lVI3 = new JLabel(VoltageIndependent2);
-                            if (data.Node[i].equals(data.Node[branch.NodeIn]))
-                                draw(branch, panel, lVI2, data.Node[i], j);
-                            if (data.Node[i].equals(data.Node[branch.NodeOut]))
-                                draw(branch, panel, lVI3, data.Node[i], j);
-                        }
-                    } else {
-                        //System.out.println("l");
-                        if (branch instanceof Resistor) {
-                            ImageIcon resistor1 = new ImageIcon("r1.png");
-                            resistor1 = scaling(resistor1,0);
-                            JLabel lr1 = new JLabel(resistor1);
-                            draw(branch, panel, lr1, data.Node[i], j);
-                        }
-                        if (branch instanceof Capacitor) {
-                            ImageIcon capacitor1 = new ImageIcon("c1.png");
-                            capacitor1 = scaling(capacitor1,0);
-                            JLabel lc1 = new JLabel(capacitor1);
-                            draw(branch, panel, lc1, data.Node[i], j);
-                        }
-                        if (branch instanceof Inductor) {
-                            ImageIcon Inductor1 = new ImageIcon("l1.jpg");
-                            Inductor1 = scaling(Inductor1,0);
-                            JLabel lL1 = new JLabel(Inductor1);
-                            draw(branch, panel, lL1, data.Node[i], j);
-                        }
-                        if (branch instanceof D) {
-                            ImageIcon Diod1 = new ImageIcon("d1.png");
-                            Diod1=scaling(Diod1,0);
-                            JLabel ld1 = new JLabel(Diod1);
-                            ImageIcon Diod4 = new ImageIcon("d4.png");
-                            Diod4 = scaling(Diod4,0);
-                            JLabel ld4 = new JLabel(Diod4);
-                            if (data.Node[i].equals(data.Node[branch.NodeIn]))
-                                draw(branch, panel, ld1, data.Node[i], j);
-                            if (data.Node[i].equals(data.Node[branch.NodeOut]))
-                                draw(branch, panel, ld4, data.Node[i], j);
-                        }
-                        if (branch instanceof CurrentDI ||
-                                branch instanceof CurrentDV) {
-                            ImageIcon CurrentD1 = new ImageIcon("cd1.png");
-                            CurrentD1 = scaling(CurrentD1,0);
-                            JLabel lCD1 = new JLabel(CurrentD1);
-                            ImageIcon CurrentD4 = new ImageIcon("cd4.png");
-                            CurrentD4 = scaling(CurrentD4,0);
-                            JLabel lCD4 = new JLabel(CurrentD4);
-                            if (data.Node[i].equals(data.Node[branch.NodeIn]))
-                                draw(branch, panel, lCD1, data.Node[i], j);
-                            if (data.Node[i].equals(data.Node[branch.NodeOut]))
-                                draw(branch, panel, lCD4, data.Node[i], j);
-                        }
-                        if (branch instanceof CurrentSource) {
-                            ImageIcon CurrentIndependent1 = new ImageIcon("ii1.png");
-                            Image scaled = CurrentIndependent1.getImage();
-                            Image modified = scaled.getScaledInstance(130, 100, java.awt.Image.SCALE_SMOOTH);
-                            CurrentIndependent1 = new ImageIcon(modified);
-                            JLabel lCI1 = new JLabel(CurrentIndependent1);
-                            ImageIcon CurrentIndependent4 = new ImageIcon("ii4.png");
-                            scaled = CurrentIndependent4.getImage();
-                            modified = scaled.getScaledInstance(130, 100, java.awt.Image.SCALE_SMOOTH);
-                            CurrentIndependent4 = new ImageIcon(modified);
-                            JLabel lCI4 = new JLabel(CurrentIndependent4);
-                            if (data.Node[i].equals(data.Node[branch.NodeIn]))
-                                draw(branch, panel, lCI1, data.Node[i], j);
-                            if (data.Node[i].equals(data.Node[branch.NodeOut]))
-                                draw(branch, panel, lCI4, data.Node[i], j);
-                        }
-                        if (branch instanceof VoltageDI ||
-                                branch instanceof VoltageDV) {
-                            ImageIcon VoltageD1 = new ImageIcon("vd1.png");
-                            VoltageD1 = scaling( VoltageD1,0);
-                            JLabel lVD1 = new JLabel(VoltageD1);
-                            ImageIcon VoltageD4 = new ImageIcon("vd4.png");
-                            VoltageD4 = scaling( VoltageD4,0);
-                            JLabel lVD4 = new JLabel(VoltageD4);
-                            if (data.Node[i].equals(data.Node[branch.NodeIn]))
-                                draw(branch, panel, lVD1, data.Node[i], j);
-                            if (data.Node[i].equals(data.Node[branch.NodeOut]))
-                                draw(branch, panel, lVD4, data.Node[i], j);
-                        }
-                        if (branch instanceof VoltageSource) {
-                            ImageIcon VoltageIndependent1 = new ImageIcon("vi1.png");
-                            VoltageIndependent1 = scaling(VoltageIndependent1,0);
-                            JLabel lVI1 = new JLabel(VoltageIndependent1);
-                            ImageIcon VoltageIndependent4 = new ImageIcon("vi4.png");
-                            VoltageIndependent4 = scaling(VoltageIndependent4,0);
-                            JLabel lVI4 = new JLabel(VoltageIndependent4);
-                            if (data.Node[i].equals(data.Node[branch.NodeIn]))
-                                draw(branch, panel, lVI1, data.Node[i], j);
-                            if (data.Node[i].equals(data.Node[branch.NodeOut]))
-                                draw(branch, panel, lVI4, data.Node[i], j);
-                        }
-                    }
-                    j++;
-                    branch.draw = 1;
-                }
-            }
-
-            for (int k = 0; k < data.Node[i].x.size() - 1; k++) {
-                ImageIcon wire1 = new ImageIcon("w.png");
-                Image scaled = wire1.getImage();
-                Image modified = scaled.getScaledInstance(100, 50, java.awt.Image.SCALE_SMOOTH);
-                wire1 = new ImageIcon(modified);
-                JLabel lw = new JLabel(wire1);
-                lw.setBounds(data.Node[i].x.get(k) + 10, data.Node[i].y.get(k), data.Node[i].x.get(k + 1) + 7, data.Node[i].y.get(k + 1));
-                panel.add(lw);
-
-            }
-        }
-
-        frame1.setBounds(0,0, 1000, 1000);
-        panel.setBounds(0,0, 1000, 1000);
-        panel.setLayout(null);
-        container.add(panel);
-        frame1.add(panel);
-        frame1.setLocationRelativeTo(null);
-        frame1.setVisible(true);
-    }
-    public void draw(Branch e, JPanel panel, JLabel label, Node n, int a) {
-        int I = 0, J = 0, cond = 0,c=0;
-        if ((int) data.Node[e.NodeOut].y.get(0) != (int) data.Node[e.NodeIn].y.get(0)) {
-            if (n.equals(data.Node[e.NodeIn])) {
-                for (int i = a; i < data.Node[e.NodeIn].x.size(); i++) {
-                    for (int j = 0; j < data.Node[e.NodeOut].x.size(); j++)
-                        if ((int) n.x.get(i) == (int) data.Node[e.NodeOut].x.get(j)) {
-                            I = i;
-                            J = j;
-                            label.setBounds(data.Node[e.NodeIn].x.get(I), data.Node[e.NodeIn].y.get(I), data.Node[e.NodeOut].x.get(J), data.Node[e.NodeOut].y.get(J));
-                            JLabel name = new JLabel(e.name);
-                            name.setBounds(data.Node[e.NodeIn].x.get(I) + 110, (data.Node[e.NodeIn].y.get(I) + data.Node[e.NodeOut].y.get(J)) / 2 + 25,
-                                    data.Node[e.NodeIn].x.get(I) + 120, (data.Node[e.NodeIn].y.get(I) + data.Node[e.NodeOut].y.get(J)) / 2 + 35);
-                            panel.add(name);
-                            c = 1;
-                            break;
-                        }
-                    if (c == 1)
-                        break;
-                }
-            }
-            if (n.equals(data.Node[e.NodeOut])) {
-                for (int i = a; i < data.Node[e.NodeOut].x.size(); i++) {
-                    for (int j = 0; j < data.Node[e.NodeIn].x.size(); j++)
-                        if ((int) n.x.get(i) == (int) data.Node[e.NodeIn].x.get(j)) {
-                            I = i;
-                            J = j;
-                            label.setBounds(data.Node[e.NodeIn].x.get(J), data.Node[e.NodeIn].y.get(J)+33, data.Node[e.NodeOut].x.get(I), data.Node[e.NodeOut].y.get(I)+33);
-                            JLabel name = new JLabel(e.name);
-                            name.setBounds(data.Node[e.NodeIn].x.get(J)+110,(data.Node[e.NodeIn].y.get(J)+data.Node[e.NodeOut].y.get(I))/2+25,
-                                    data.Node[e.NodeIn].x.get(J)+120,(data.Node[e.NodeIn].y.get(J)+data.Node[e.NodeOut].y.get(I))/2+35);
-                            panel.add(name);
-                            c=1;
-                            break;
-                        }
-                    if (c == 1)
-                        break;
-                }
-            }
-
-        } else {
-            if (n.equals(data.Node[e.NodeIn])) {
-                cond = 0;
-                for (int i = 0; i < n.x.size(); i++)
-                    for (int j = 0; j < data.Node[e.NodeOut].x.size(); j++)
-                        if ((int) n.x.get(i) > (int) data.Node[e.NodeOut].x.get(j)) {
-                            cond = 1;
-                            break;
-                        }
-
-                if (cond == 1)
-                    label.setBounds(data.Node[e.NodeIn].x.get(0), data.Node[e.NodeIn].y.get(0) - 30, data.Node[e.NodeOut].x.get(data.Node[e.NodeOut].x.size() - 1), data.Node[e.NodeOut].y.get(data.Node[e.NodeOut].x.size() - 1) - 30);
-                else
-                    label.setBounds(data.Node[e.NodeIn].x.get(n.x.size() - 1) + 10, data.Node[e.NodeIn].y.get(n.x.size() - 1) + 33, data.Node[e.NodeOut].x.get(0) + 10, data.Node[e.NodeOut].y.get(0) + 33);
-            }
-            if (n.equals(data.Node[e.NodeOut])) {
-                cond = 0;
-                for (int i = 0; i < n.x.size(); i++)
-                    for (int j = 0; j < data.Node[e.NodeIn].x.size(); j++)
-                        if ((int) n.x.get(i) > (int) data.Node[e.NodeIn].x.get(j))
-                            cond = 1;
-
-                if (cond == 1)
-                    label.setBounds(data.Node[e.NodeIn].x.get(data.Node[e.NodeIn].x.size() - 1), data.Node[e.NodeIn].y.get(data.Node[e.NodeIn].x.size() - 1) - 30, data.Node[e.NodeOut].x.get(0), data.Node[e.NodeOut].y.get(0) - 30);
-                else
-                    label.setBounds(data.Node[e.NodeIn].x.get(0), data.Node[e.NodeIn].y.get(0), data.Node[e.NodeOut].x.get(n.x.size() - 1), data.Node[e.NodeOut].y.get(n.x.size() - 1));
-            }
-        }
-        panel.add(label);
-
-    }
-
-    public  ImageIcon scaling(ImageIcon im, int condition) {
-        // condition=1 : icon should set vertically
-        // condition=0 : icon should set horizontally
-        Image scaled = im.getImage();
-        Image modified;
-        if (condition == 1)
-            modified = scaled.getScaledInstance(50, 106, java.awt.Image.SCALE_SMOOTH);
-        else
-            modified = scaled.getScaledInstance(80, 90, java.awt.Image.SCALE_SMOOTH);
-        im = new ImageIcon(modified);
-        return im;
-    }
-}*/
-class Phase{
-JFrame frame=new JFrame("Solve circuit");
-String fileName;
-    Phase() {
-        Container container=frame.getContentPane();
-        JRootPane root=frame.getRootPane();
-        LayoutManager mgr=new GroupLayout(container);
-        frame.setLayout(mgr);
-        Image icon = Toolkit.getDefaultToolkit().getImage("ci.png");
-        //frame.setIconImage(new ImageIcon("ci.png").getImage().getScaledInstance(50,50,Image.SCALE_DEFAULT));
-        frame.setIconImage(icon);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        JButton run= new JButton("RUN");
-        JButton load = new JButton("LOAD");
-        JButton draw= new JButton("DRAW");
-        run.setBounds(1400,10,120,40);
-        draw.setBounds(1200,10,120,40);
-        load.setBounds(1000,10,120,40);
-        JTextArea text=new JTextArea();
-        text.setBounds(10,10,400,500);
-        frame.add(text);
-        load.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-        MyChooser fileChooser = new MyChooser();
-        fileChooser.setCurrentDirectory(new File("C:\\Users\\m1997\\IdeaProjects\\First"));
-        int result = fileChooser.showOpenDialog(frame);
-        if (result == JFileChooser.APPROVE_OPTION) {
-            fileName = fileChooser.getSelectedFile().getName();
-            /*try {
-                Desktop.getDesktop().open(new File(fileName));
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }*/
-            System.out.println("Selected file: " + fileName);
-        }
-
-            }
-        });
-        run.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if(fileName==null){
-                    JOptionPane.showMessageDialog(frame,"Choose the file first!","",JOptionPane.WARNING_MESSAGE);
-                }
-                else{
-                    try {
-                        BufferedReader bf=new BufferedReader(new FileReader(fileName));
-                        String line=bf.readLine();
-                        text.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,20));
-                        while(line!=null){
-                            text.append(line+"\n");
-                            line=bf.readLine();
-                        }
-                        bf.close();
-                        SolveCircuit solveCircuit=new SolveCircuit(fileName);
-                        solveCircuit.solveRLC();
-                        if(solveCircuit.data.error!=0){
-                            JOptionPane.showMessageDialog(frame,"ERROR   =  "+Integer.toString(solveCircuit.data.error)," ",JOptionPane.WARNING_MESSAGE);
-                        }
-                        solveCircuit.calculateResult();
-                        solveCircuit.saveResult();
-                    } catch (FileNotFoundException ex) {
-                        ex.printStackTrace();
-                    } catch (IOException ex) {
-                        ex.printStackTrace();
-                    }
-
-                }
-            }
-        });
-        draw.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if(fileName==null){
-                    JOptionPane.showMessageDialog(frame,"Choose the file first!","",JOptionPane.WARNING_MESSAGE);
-                }
-            }
-        });
-        frame.add(run); frame.add(load);frame.add(draw);
-        frame.setBounds(0,0,1600,900);
-        frame.setVisible(true);
-    }
-}
  class MyChooser extends JFileChooser {
     protected JDialog createDialog(Component parent)
             throws HeadlessException {
@@ -1186,7 +796,9 @@ String fileName;
 }
 //////////////////////////////////
 class Show extends Canvas {
-    ReadTxt data;
+  ReadTxt data;
+  double dt,T;
+    String fileName;
     public  void draw(Branch e,JPanel panel,JLabel label,Node n,int a) {
         int I=0,J=0,cond=0, c=0;
         if((int)data.Node[e.NodeOut].y.get(0)!=(int)data.Node[e.NodeIn].y.get(0)) {
@@ -1194,6 +806,7 @@ class Show extends Canvas {
                 for(int i=a;i<data.Node[e.NodeIn].x.size();i++) {
                     for(int j=0;j<data.Node[e.NodeOut].x.size();j++)
                         if((int)n.x.get(i)==(int)data.Node[e.NodeOut].x.get(j)) {
+                            if((int)data.Node[e.NodeOut].draw.get(j)==0 && (int)data.Node[e.NodeIn].draw.get(i)==0) {
                             I=i;
                             J=j;
 
@@ -1203,8 +816,10 @@ class Show extends Canvas {
                                     data.Node[e.NodeIn].x.get(I)+120,(data.Node[e.NodeIn].y.get(I)+data.Node[e.NodeOut].y.get(J))/2+35);
                             panel.add(name);
                             c=1;
-                            break;
-                        }
+                            data.Node[e.NodeIn].draw.set(i,1);
+                            data.Node[e.NodeOut].draw.set(j,1);
+                                break;
+                        }}
                     if(c==1)
                         break;
                 }
@@ -1214,16 +829,23 @@ class Show extends Canvas {
                 for(int i=a;i<data.Node[e.NodeOut].x.size();i++) {
                     for(int j=0;j<data.Node[e.NodeIn].x.size();j++)
                         if((int)n.x.get(i)==(int)data.Node[e.NodeIn].x.get(j)) {
+                            if((int)data.Node[e.NodeIn].draw.get(j)==0 &&(int)data.Node[e.NodeOut].draw.get(i)==0) {
                             I=i;
                             J=j;
                             label.setBounds(data.Node[e.NodeIn].x.get(J),data.Node[e.NodeIn].y.get(J)+33,data.Node[e.NodeOut].x.get(I),data.Node[e.NodeOut].y.get(I)+33);
                             JLabel name = new JLabel(e.name);
-                            name.setBounds(data.Node[e.NodeIn].x.get(J)+110,(data.Node[e.NodeIn].y.get(J)+data.Node[e.NodeOut].y.get(I))/2+25,
-                                    data.Node[e.NodeIn].x.get(J)+120,(data.Node[e.NodeIn].y.get(J)+data.Node[e.NodeOut].y.get(I))/2+35);
+                            int X = label.getX();
+                            int Y = label.getY();
+                            name.setLocation(X,Y);
+                            name.setBounds(data.Node[e.NodeIn].x.get(J)+130,(data.Node[e.NodeIn].y.get(J)+data.Node[e.NodeOut].y.get(I))/2+25,
+                                    data.Node[e.NodeIn].x.get(J)+135,(data.Node[e.NodeIn].y.get(J)+data.Node[e.NodeOut].y.get(I))/2+35);
                             panel.add(name);
+                             panel.repaint();
                             c=1;
+                            data.Node[e.NodeIn].draw.set(j,1);
+                            data.Node[e.NodeOut].draw.set(i,1);
                             break;
-                        }
+                        }}
                     if(c==1)
                         break;
                 }
@@ -1233,6 +855,16 @@ class Show extends Canvas {
         else {
             if(n.equals(data.Node[e.NodeIn])) {
                 cond=0; int y=0,x=0,b=0,I1=0;
+                if(n.cond1>0 && data.Node[e.NodeOut].cond1>0) {
+                    ImageIcon im = (ImageIcon) label.getIcon();
+                    Image scaled = im.getImage();
+                    Image modified;
+                    modified = scaled.getScaledInstance(150,50, java.awt.Image.SCALE_SMOOTH);
+                    im = new ImageIcon(modified);
+                    label.removeAll();
+                    JLabel l = new JLabel(im);
+                    label = l;
+                }
                 if(a>=n.x.size()) {
                     I1=n.x.size()-1;
                     for(int j=0;j<data.Node[e.NodeOut].x.size();j++)
@@ -1264,8 +896,9 @@ class Show extends Canvas {
                     y=data.Node[e.NodeIn].y.get(I1)+33;
                 }
                 JLabel name = new JLabel(e.name);
-                name.setBounds(x+80,y-10+33*(500-data.Node[e.NodeIn].y.get(I1))/100,x+85,y-5+33*(500-data.Node[e.NodeIn].y.get(I1))/100);
+                name.setBounds(x+95,y-20+33*(500-data.Node[e.NodeIn].y.get(I1))/100,x+100,y-15+33*(500-data.Node[e.NodeIn].y.get(I1))/100);
                 panel.add(name);
+                panel.repaint();
             }
             if(n.equals(data.Node[e.NodeOut])) {
                 cond=0; int y=0,x=0,b=0,I1=0;
@@ -1303,12 +936,13 @@ class Show extends Canvas {
                 }
 
                 JLabel name = new JLabel(e.name);
-                name.setBounds(x+80,y-10+33*(500-data.Node[e.NodeIn].y.get(I1))/100,x+85,y-5+33*(500-data.Node[e.NodeIn].y.get(I1))/100);
+                name.setBounds(x+95,y-20+33*(500-data.Node[e.NodeIn].y.get(I1))/100,x+100,y-15+33*(500-data.Node[e.NodeIn].y.get(I1))/100);
                 panel.add(name);
+                panel.repaint();
             }
         }
         panel.add(label);
-
+        panel.repaint();
     }
     public ImageIcon scaling(ImageIcon im, int condition) {
         // condition=1 : icon should set vertically
@@ -1321,6 +955,22 @@ class Show extends Canvas {
             modified = scaled.getScaledInstance(90, 90 , java.awt.Image.SCALE_SMOOTH);
         im = new ImageIcon(modified);
         return im;
+    }
+
+    private boolean shouldDiscardRelease = false;
+    public void mouseReleased(MouseEvent e) {
+        if (SwingUtilities.isLeftMouseButton(e)) {
+            // Support for multiClickThreshhold
+            if (shouldDiscardRelease) {
+                shouldDiscardRelease = false;
+                return;
+            }
+            AbstractButton b = (AbstractButton) e.getSource();
+            ButtonModel model = b.getModel();
+            model.setPressed(false);
+            model.setArmed(false);
+        }
+
     }
 
     public static class MyCanvas extends JPanel{
@@ -1443,9 +1093,7 @@ class Show extends Canvas {
         }
         return max;
     }
-   public Show(ReadTxt data) throws IOException {
-
-        double dt=data.dt,T=data.finalTime;
+   public Show() throws IOException {
         JFrame frame1 = new JFrame();
         JPanel panel = new JPanel();
         panel.setLayout(null);
@@ -1453,14 +1101,44 @@ class Show extends Canvas {
         JPanel drawpanel = new JPanel();
         drawpanel.setLayout(null);
         JButton RUN = new JButton("RUN");
-        RUN.setBounds(200, 200, 100, 50);
+        RUN.setBounds(1200, 60, 100, 40);
         panel.add(RUN);
         JLabel t1  = new JLabel("press RUN to see the circuit image");
-        t1.setBounds(200, 150, 250, 50);
+        t1.setBounds(1050, 20, 250, 20);
         panel.add(t1);
         JButton DRAW = new JButton("DRAW");
-        DRAW.setBounds(200, 300, 120, 50);
-        panel.add(DRAW);
+        DRAW.setBounds(1090, 60, 100, 40);
+        ///
+       Image icon = Toolkit.getDefaultToolkit().getImage("ci.png");
+       frame1.setIconImage(icon);
+       frame1.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+       JButton load = new JButton("LOAD");
+       load.setBounds(980,60,100,40);
+       JTextArea text=new JTextArea();
+       text.setBounds(10,10,400,500);
+       panel.add(text);
+       ButtonModel model0 = load.getModel();
+       model0.setPressed(false);
+       load.addActionListener(new ActionListener() {
+           @Override
+           public void actionPerformed(ActionEvent e) {
+               MyChooser fileChooser = new MyChooser();
+               fileChooser.setCurrentDirectory(new File("C:\\Users\\m1997\\IdeaProjects\\First"));
+               int result = fileChooser.showOpenDialog(frame1);
+               if (result == JFileChooser.APPROVE_OPTION) {
+                   fileName = fileChooser.getSelectedFile().getName();
+            /*try {
+                Desktop.getDesktop().open(new File(fileName));
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }*/
+
+               }
+
+           }
+       });
+        panel.add(DRAW); panel.add(load);
+        if(fileName!=null){
         int x=100,Y = -1;
         int count = 0;
         for(int i=0;i<=data.node;i++) {
@@ -1476,9 +1154,9 @@ class Show extends Canvas {
                     connectedNode.add(data.Node[b.NodeIn]);
             }
             if(count>1) data.Node[i].cond = count;
-            for(int k=0;k<connectedNode.size();k++)
-                for(int q=k+1;q<connectedNode.size();q++) {
-                    if(connectedNode.get(k).equals(connectedNode.get(q)))
+            for(int k=0;k<connectedNode.size();k++){
+                if(Math.abs((int)connectedNode.get(k).index-i)==2
+                        && (int)connectedNode.get(k).index!=0 && i!=0)
                         data.Node[i].cond1++;
 
                 }
@@ -1486,6 +1164,8 @@ class Show extends Canvas {
 
         int X=0;
         for(int i=0;i<=data.node;i++) {
+            int yscale = (int) i/6;
+            Y=yscale;
             if(i%6==1 || i==0)
                 x=200;
             if(data.Node[i].cond>0) {
@@ -1493,7 +1173,7 @@ class Show extends Canvas {
                     for(int j=0;j<6;j++) {
                         data.Node[i].y.add((int) 500);
                         data.Node[i].x.add((int) (x+50*j));
-
+                        data.Node[i].draw.add((int) 0);
                     }
                 else {
 
@@ -1502,6 +1182,7 @@ class Show extends Canvas {
                             Y++;
                        data.Node[i].y.add((int) 400-Y*100);
                        data.Node[i].x.add((int) (x+50*j));
+                        data.Node[i].draw.add((int) 0);
                     }
 
                 }
@@ -1514,7 +1195,20 @@ class Show extends Canvas {
                     Y++;
                 data.Node[i].y.add((int) 400-Y*100);
                 data.Node[i].x.add((int) (x));
+                data.Node[i].draw.add((int) 0);
             }
+            X=data.Node[i].x.size();
+		   if(data.Node[i].cond1>0) {
+			   for(int j=1;j<=data.Node[i].cond1;j++) {
+                   data.Node[i].y.add((int) 400-(Y+j)*100);
+                   data.Node[i].x.add((int)data.Node[i].x.get(0));
+                   data.Node[i].draw.add((int) 0);
+
+			   }
+			   X=data.Node[i].x.size()-data.Node[i].cond1;
+
+
+		   }
             if(data.Node[i].cond1>0) {
                 for(int j=1;j<=data.Node[i].cond1;j++) {
                     data.Node[i].y.add((int) 400-(Y+j)*100);
@@ -1524,13 +1218,41 @@ class Show extends Canvas {
             }
             x += 50*(X);
 
-        }
-
+        }}}
+            ButtonModel model = RUN.getModel();
+            model.setPressed(false);
+           model.setArmed(false);
         RUN.addActionListener(new ActionListener() {
+
+
 
             @Override
             public void actionPerformed(ActionEvent arg0) {
-                int l=0;
+                if(fileName==null){
+                    JOptionPane.showMessageDialog(frame1,"Choose the file first!","",JOptionPane.WARNING_MESSAGE);
+                }else{
+                    SolveCircuit sC= null;
+                    try {
+                        sC = new SolveCircuit(fileName);
+                        sC.calculateResult();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+
+                    data=sC.data;
+                    if(sC.data.error!=0){
+                        JOptionPane.showMessageDialog(frame1,"ERROR  =  "+sC.data.error,"",JOptionPane.WARNING_MESSAGE);
+                    }
+                    else {
+                        sC.solveRLC();
+                        sC.calculateResult();
+                        try {
+                            sC.saveResult();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        int l=0;
                 for(int i=0;i<=data.node;i++) {
                     // int cte =0 ;
                     for(Branch b:data.Node[i].branches) {
@@ -1634,7 +1356,6 @@ class Show extends Canvas {
                                 }
                             }
                             else {
-                                //System.out.println("l");
                                 if(b instanceof Resistor) {
                                     ImageIcon resistor1 = new ImageIcon("r1.png");
                                     resistor1 = scaling(resistor1,0);
@@ -1771,12 +1492,20 @@ class Show extends Canvas {
                     }
                 }
 
-            }
+            }}}
 
         });
+
+
+            ButtonModel model1 = DRAW.getModel();
+            model1.setPressed(false);
         DRAW.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent arg0) {
+                if(fileName==null){
+                    JOptionPane.showMessageDialog(frame1,"Choose the file first!","",JOptionPane.WARNING_MESSAGE);
+                }
+                else{
                 JButton draw = new JButton("DRAW");
                 draw.setBounds(50,150,80,30);
                 frame2.add(draw);
@@ -1788,12 +1517,14 @@ class Show extends Canvas {
                 JTextField e = new JTextField("");
                 e.setBounds(50,100,100,20);
                 drawpanel.add(e);
+                ButtonModel model2 = draw.getModel();
+                model2.setPressed(false);
                 draw.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent arg0) {
                        int l=0;
+                        double value,value1,value2;
                         for(Branch Element:data.Branch) {
-                            System.out.println(Element.v[3]);
                             if(Element.name.equals(e.getText())) {
                                 JFrame fv = new JFrame();
                                 JFrame fc = new JFrame();
@@ -1807,50 +1538,61 @@ class Show extends Canvas {
                                 fv.setSize(700,700);
                                 fc.setSize(700,700);
                                 fp.setSize(700,700);
-                                double max=0;
+                                double max=0;int cond=0;
                                 max=drawlabel(pic,T,Element.v);
+                                for(int a=0;a<Element.v.length;a++)
+                                    if((double)Element.v[a]<0)
+                                        cond=1;
                                 for(int j=0;j<T/dt;j++) {
-                                    int r1 = 0;
 
-                                    if(Element.v[0]<1 ||Element.v[(Element.v.length-1)]<1 )
-                                        r1= R(Element.v[0],Element.v[(Element.v.length-1)]);
-                                    //							       
                                     int k = j;
                                     int c = j;
                                     while(Element.v[c]==Element.v[k]) {
-                                        MyCanvas.Image.setRGB((int)(50+k*540*dt/T),(int)(Math.round(570-(520/max*Element.v[k]))),Color.BLUE.getBlue());
+                                        if(cond==1)
+                                            value= Element.v[k]+max*(max-Element.v[k])/2;
+                                        else
+                                            value = Element.v[k];
+                                        MyCanvas.Image.setRGB((int)(50+k*540*dt/T),(int)(Math.round(570-(520/max*value))),Color.BLUE.getBlue());
                                         if(k==Element.v.length-1)
                                             break;
                                         k++;
                                         j=k-1;
                                     }
                                 }
-                                double max1=0;
+                                double max1=0;int cond1=0;
                                 max1=drawlabel(pic1,T,Element.i);
+                                for(int a=0;a<Element.i.length;a++)
+                                    if((double)Element.i[a]<0)
+                                        cond1=1;
                                 for(int j=0;j<T/dt;j++) {
-                                    int r2=0;
-                                    if(Element.i[0]<1 ||Element.i[(Element.i.length-1)]<1 )
-                                        r2= R(Element.i[0],Element.i[(Element.i.length-1)]);
                                     int k = j;
                                     int c = j;
                                     while((double)Element.i[c]==(double)Element.i[k]) {
-                                        MyCanvas1.Image.setRGB((int)(50+k*540*dt/T),(int)(Math.round(570-(520/max1*Element.i[k]))),Color.GREEN.getGreen());
+                                        if(cond1==1)
+                                            value1 = Element.i[k]+max1*(max1-Element.i[k])/2;
+                                        else
+                                            value1 = Element.i[k];
+                                        MyCanvas1.Image.setRGB((int)(50+k*540*dt/T),(int)(Math.round(570-(520/max1*value1))),Color.GREEN.getGreen());
                                         if(k==Element.i.length-1)
                                             break;
                                         k++;
                                         j=k-1;
                                     }
                                 }
-                                double max2=0;
+                                double max2=0; int cond2=0;
+                                for(int a=0;a<Element.p.length;a++)
+                                    if((double)Element.p[a]<0)
+                                        cond2=1;
                                 max2=drawlabel(pic2,T,Element.p);
                                 for(int j=0;j<T/dt;j++) {
-                                    int r3=0;
-                                    if(Element.p[0]<1 ||Element.p[(Element.p.length-1)]<1 )
-                                        r3=R(Element.p[0],Element.p[(Element.p.length-1)]);
                                     int k = j;
                                     int c = j;
                                     while((double)Element.p[c]==(double)Element.p[k]) {
-                                        MyCanvas2.Image.setRGB((int)(50+k*540*dt/T),(int)(Math.round(570-(520/max2*Element.p[k]))),Color.RED.getRed());
+                                        if(cond2==1)
+                                            value2 = Element.p[k]+max2*(max2-Element.p[k])/2;
+                                        else
+                                            value2 = Element.p[k];
+                                        MyCanvas2.Image.setRGB((int)(50+k*540*dt/T),(int)(Math.round(570-(520/max2*value2))),Color.RED.getRed());
                                         if(k==Element.p.length-1)
                                             break;
                                         k++;
@@ -1877,29 +1619,20 @@ class Show extends Canvas {
 
                 frame2.add(drawpanel);
                 frame2.setVisible(true);
-            }
+            }}
         });
-        frame1.setBounds(0,0, 800, 800);
+        frame1.setBounds(0,0, 1400, 800);
         panel.setBounds(0,0, 800, 800);
         frame1.add(panel);
         frame1.setLocationRelativeTo(null);
         frame1.setVisible(true);
     }
-}}
+}
 
 public class First {
     public static void main(String[] args) throws IOException {
-   //Phase2 p=new Phase2("RCV.txt");
-        //Phase p=new Phase();
-        //graphic g=new graphic();
-        SolveCircuit sC=new SolveCircuit("DVS.txt");
-   sC.solveRLC();
+       /* SolveCircuit sC=new SolveCircuit("RC_circuit.txt");
    sC.calculateResult();
-   sC.saveResult();
-  //Show s=new Show(sC.data);
-        ///int k= (int) (sC.data.finalTime/sC.data.dt);
-        //System.out.println(sC.data.unions);
-///for(int j=0;j<=sC.data.node;j++)System.out.println(sC.data.Node[j].v[k]);
-     ///   System.out.println(sC.data.finalTime+" "+sC.data.dt);
-       //// for(int i=0;i<k;i++)System.out.println(sC.data.R[0].i[i]+" "+sC.data.C[0].i[i]);
+   sC.saveResult();*/
+  Show s=new Show();
     }}
